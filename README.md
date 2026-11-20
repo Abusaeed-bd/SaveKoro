@@ -4,6 +4,11 @@ Facebook, YouTube, Instagram, TikTok, Pinterest আর Threads থেকে ভ�
 ইঞ্জিন: [yt-dlp](https://github.com/yt-dlp/yt-dlp) + ffmpeg ([youtubedl-android](https://github.com/yausername/youtubedl-android) লাইব্রেরির মাধ্যমে)।
 কোনো সার্ভার লাগে না, ডাউনলোড হয় ফোন থেকে সরাসরি।
 
+## 📥 ডাউনলোড করুন
+**[⬇️ SaveKoro ডাউনলোড (বেশিরভাগ ফোন)](https://github.com/Abusaeed-bd/SaveKoro/releases/latest/download/SaveKoro-arm64.apk)**
+
+পুরনো ফোন: [armv7](https://github.com/Abusaeed-bd/SaveKoro/releases/latest/download/SaveKoro-armv7.apk) · সব ফোন: [universal](https://github.com/Abusaeed-bd/SaveKoro/releases/latest/download/SaveKoro-universal.apk) · [সব ভার্সন](https://github.com/Abusaeed-bd/SaveKoro/releases)
+
 ## ফিচার
 - লিংক পেস্ট করলে প্ল্যাটফর্ম নিজে চিনে নেয়
 - অন্য অ্যাপ থেকে **Share → SaveKoro** করলে লিংক নিজে বসে যায় আর ভিডিওর তথ্য চলে আসে
