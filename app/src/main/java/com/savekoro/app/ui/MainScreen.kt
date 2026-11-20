@@ -89,7 +89,7 @@ fun MainScreen(vm: MainViewModel) {
         }
     }
 
-    // Android 8/9 তে গ্যালারিতে লেখার পারমিশন লাগে
+    // Android 8/9 need storage permission to write to the gallery
     val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         if (ok) vm.download()
     }
@@ -122,14 +122,14 @@ fun MainScreen(vm: MainViewModel) {
             OutlinedTextField(
                 value = s.url,
                 onValueChange = vm::onUrlChange,
-                label = { Text("ভিডিওর লিংক পেস্ট করুন") },
+                label = { Text("Paste video link") },
                 placeholder = { Text("https://…") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 trailingIcon = {
                     if (s.url.isNotEmpty()) {
                         IconButton(onClick = { vm.onUrlChange("") }) {
-                            Icon(Icons.Default.Clear, contentDescription = "মুছুন")
+                            Icon(Icons.Default.Clear, contentDescription = "Clear")
                         }
                     }
                 },
@@ -150,13 +150,13 @@ fun MainScreen(vm: MainViewModel) {
                         }
                     },
                     modifier = Modifier.weight(1f),
-                ) { Text("📋 পেস্ট") }
+                ) { Text("📋 Paste") }
 
                 Button(
                     onClick = vm::fetchInfo,
                     enabled = s.url.isNotBlank() && !s.fetching && s.engineReady,
                     modifier = Modifier.weight(1f),
-                ) { Text("🔍 ভিডিও খুঁজুন") }
+                ) { Text("🔍 Fetch info") }
             }
 
             if (!s.engineReady && s.error == null) {
@@ -164,7 +164,7 @@ fun MainScreen(vm: MainViewModel) {
                     CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                     Spacer(Modifier.width(10.dp))
                     Text(
-                        "ইঞ্জিন প্রস্তুত হচ্ছে (প্রথমবার একটু সময় লাগে)…",
+                        "Preparing engine (first launch takes a moment)…",
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
@@ -185,11 +185,11 @@ fun MainScreen(vm: MainViewModel) {
                     onClick = ::startDownload,
                     enabled = s.url.isNotBlank() && s.engineReady,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
-                ) { Text("⬇️  ডাউনলোড করুন", style = MaterialTheme.typography.titleMedium) }
+                ) { Text("⬇️  Download", style = MaterialTheme.typography.titleMedium) }
             }
 
             if (s.saved.isNotEmpty()) {
-                Text("এই সেশনে সেভ হয়েছে", style = MaterialTheme.typography.titleSmall)
+                Text("Saved this session", style = MaterialTheme.typography.titleSmall)
                 s.saved.forEach { SavedRow(it) }
             }
 
@@ -202,13 +202,13 @@ fun MainScreen(vm: MainViewModel) {
                     modifier = Modifier.weight(1f),
                 )
                 TextButton(onClick = vm::updateEngine, enabled = s.engineReady && !s.updating && !s.downloading) {
-                    Text(if (s.updating) "আপডেট হচ্ছে…" else "🔄 ইঞ্জিন আপডেট")
+                    Text(if (s.updating) "Updating…" else "🔄 Update engine")
                 }
             }
 
             Text(
-                "শুধু নিজের ভিডিও বা যেগুলো নামানোর অনুমতি আছে সেগুলো ডাউনলোড করুন। " +
-                    "অন্যের কনটেন্ট আবার আপলোড করলে কপিরাইট সমস্যা হতে পারে।",
+                "Only download your own videos or content you have permission to download. " +
+                    "Re-uploading other people's content may violate copyright.",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -300,7 +300,7 @@ private fun MetaCard(m: VideoMeta) {
 @Composable
 private fun QualityRow(selected: Quality, enabled: Boolean, onPick: (Quality) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text("কোয়ালিটি", style = MaterialTheme.typography.titleSmall)
+        Text("Quality", style = MaterialTheme.typography.titleSmall)
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -329,10 +329,10 @@ private fun ProgressCard(s: UiState, onCancel: () -> Unit) {
                 )
                 Spacer(Modifier.width(12.dp))
                 if (s.etaSec > 0) {
-                    Text("বাকি ~${formatTime(s.etaSec)}", style = MaterialTheme.typography.bodyMedium)
+                    Text("~${formatTime(s.etaSec)} left", style = MaterialTheme.typography.bodyMedium)
                 }
                 Spacer(Modifier.weight(1f))
-                TextButton(onClick = onCancel) { Text("বাতিল") }
+                TextButton(onClick = onCancel) { Text("Cancel") }
             }
             LinearProgressIndicator(progress = { s.progress }, modifier = Modifier.fillMaxWidth())
             if (s.statusLine.isNotBlank()) {
@@ -365,13 +365,13 @@ private fun SavedRow(item: SavedItem) {
                     val i = Intent(Intent.ACTION_VIEW).setDataAndType(uri, mime)
                         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     runCatching { ctx.startActivity(i) }
-                }) { Text("চালান") }
+                }) { Text("Play") }
                 TextButton(onClick = {
                     val i = Intent(Intent.ACTION_SEND).setType(mime)
                         .putExtra(Intent.EXTRA_STREAM, uri)
                         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    runCatching { ctx.startActivity(Intent.createChooser(i, "শেয়ার করুন")) }
-                }) { Text("শেয়ার") }
+                    runCatching { ctx.startActivity(Intent.createChooser(i, "Share via")) }
+                }) { Text("Share") }
             }
         }
     }

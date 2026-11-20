@@ -9,7 +9,7 @@ enum class Platform(val label: String, val color: Long) {
     TIKTOK("TikTok", 0xFF111111),
     PINTEREST("Pinterest", 0xFFE60023),
     THREADS("Threads", 0xFF000000),
-    OTHER("অন্যান্য", 0xFF607D8B);
+    OTHER("Other", 0xFF607D8B);
 
     companion object {
         val supported = entries.filter { it != OTHER }
@@ -31,7 +31,7 @@ enum class Platform(val label: String, val color: Long) {
 
         private val urlRegex = Regex("""https?://[^\s<>"']+""")
 
-        /** শেয়ার করা টেক্সট থেকে (যেমন "দেখো এই ভিডিও https://...") লিংক বের করে */
+        /** Extracts the link from shared text (e.g. "check this out https://...") */
         fun extractUrl(text: String): String? =
             urlRegex.find(text)?.value?.trimEnd('.', ',', ')', ']', '!', '?')
     }

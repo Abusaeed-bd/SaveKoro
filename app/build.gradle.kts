@@ -4,6 +4,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+// GitHub Actions passes -Pvc=<run number>, so the version bumps on every build
+val vc = (project.findProperty("vc") as String?)?.toIntOrNull() ?: 1
+val releaseKeystore = file("release.jks")
+
 android {
     namespace = "com.savekoro.app"
     compileSdk = 35
@@ -12,11 +16,23 @@ android {
         applicationId = "com.savekoro.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = vc
+        versionName = "1.0.$vc"
     }
 
-    // প্রতিটা ফোন-টাইপের জন্য আলাদা ছোট APK + একটা universal APK (সব ফোনে চলে)
+    // Permanent signing key: comes from GitHub Secrets, never stored in the repo
+    signingConfigs {
+        create("release") {
+            if (releaseKeystore.exists()) {
+                storeFile = releaseKeystore
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = "savekoro"
+                keyPassword = System.getenv("KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
+    // One small APK per CPU type + one universal APK that runs everywhere
     splits {
         abi {
             isEnable = true
@@ -28,10 +44,14 @@ android {
 
     buildTypes {
         release {
-            // yt-dlp লাইব্রেরি reflection ব্যবহার করে, তাই minify বন্ধ
+            // yt-dlp library uses reflection, so minify is off
             isMinifyEnabled = false
-            // শুধু নিজে ইনস্টল/টেস্টের জন্য debug key দিয়ে সাইন। বিক্রির আগে নিজের keystore বানান।
-            signingConfig = signingConfigs.getByName("debug")
+            // Release key if keystore exists, otherwise debug key (local testing)
+            signingConfig = if (releaseKeystore.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 
@@ -47,7 +67,7 @@ android {
         compose = true
     }
 
-    // youtubedl-android এর জন্য জরুরি: native lib (python, ffmpeg) extract করা লাগে
+    // Required by youtubedl-android: native libs (python, ffmpeg) must be extracted
     packaging {
         jniLibs {
             useLegacyPackaging = true

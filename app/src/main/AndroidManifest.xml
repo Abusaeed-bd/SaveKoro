@@ -3,7 +3,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- শুধু Android 8/9 এর জন্য; Android 10+ এ কোনো স্টোরেজ পারমিশন লাগে না -->
+    <!-- Only for Android 8/9; Android 10+ needs no storage permission -->
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
@@ -26,7 +26,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Facebook/TikTok/YouTube অ্যাপ থেকে "Share" করলে SaveKoro দেখাবে -->
+            <!-- SaveKoro appears in the Share menu of Facebook/TikTok/YouTube apps -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />

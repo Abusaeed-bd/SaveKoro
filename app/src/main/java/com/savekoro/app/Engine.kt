@@ -9,7 +9,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * yt-dlp + ffmpeg ইঞ্জিন। প্রথমবার চালু হতে কয়েক সেকেন্ড লাগে (python extract হয়)।
+ * yt-dlp + ffmpeg engine. First start takes a few seconds (Python gets extracted).
  */
 object Engine {
     private val mutex = Mutex()
@@ -33,7 +33,7 @@ object Engine {
     fun version(context: Context): String =
         runCatching { YoutubeDL.getInstance().version(context.applicationContext) }.getOrNull() ?: "?"
 
-    /** yt-dlp কে GitHub থেকে সর্বশেষ stable ভার্সনে আপডেট করে। true = নতুন ভার্সন বসেছে */
+    /** Updates yt-dlp to the latest stable release from GitHub. true = a new version was installed */
     suspend fun update(context: Context): Boolean = withContext(Dispatchers.IO) {
         ensureReady(context)
         val status = YoutubeDL.getInstance().updateYoutubeDL(context.applicationContext)
@@ -42,8 +42,8 @@ object Engine {
     }
 
     /**
-     * সাইটগুলো প্রায়ই বদলায়, তাই দিনে একবার নিজে থেকে yt-dlp আপডেট করে।
-     * নেট না থাকলে চুপচাপ বাদ দেয়।
+     * Sites change often, so yt-dlp auto-updates once a day.
+     * Silently skipped when offline.
      */
     suspend fun autoUpdateIfDue(context: Context) {
         val last = prefs(context).getLong(KEY_LAST_UPDATE, 0)

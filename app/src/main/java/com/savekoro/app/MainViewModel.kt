@@ -17,11 +17,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 enum class Quality(val label: String, val format: String) {
-    BEST("সেরা", "bv*+ba/b"),
+    BEST("Best", "bv*+ba/b"),
     P1080("1080p", "bv*[height<=1080]+ba/b[height<=1080]/b"),
     P720("720p", "bv*[height<=720]+ba/b[height<=720]/b"),
     P480("480p", "bv*[height<=480]+ba/b[height<=480]/b"),
-    AUDIO("MP3 অডিও", "ba/b"),
+    AUDIO("MP3 Audio", "ba/b"),
 }
 
 data class VideoMeta(
@@ -68,7 +68,7 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
                 Engine.autoUpdateIfDue(app)
                 _state.update { it.copy(engineVersion = Engine.version(app)) }
             } catch (e: Exception) {
-                _state.update { it.copy(error = "ইঞ্জিন চালু হয়নি: ${e.message}") }
+                _state.update { it.copy(error = "Engine failed to start: ${e.message}") }
             }
         }
     }
@@ -99,7 +99,7 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
                 _state.update {
                     it.copy(
                         meta = VideoMeta(
-                            title = info.title ?: "শিরোনাম নেই",
+                            title = info.title ?: "Untitled",
                             thumbnail = info.thumbnail,
                             uploader = info.uploader,
                             durationSec = info.duration ?: 0,
@@ -124,7 +124,7 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
 
         job = viewModelScope.launch {
             _state.update {
-                it.copy(downloading = true, progress = 0f, etaSec = 0, statusLine = "শুরু হচ্ছে…", error = null)
+                it.copy(downloading = true, progress = 0f, etaSec = 0, statusLine = "Starting…", error = null)
             }
             val tmp = File(app.cacheDir, "dl/${System.currentTimeMillis()}").apply { mkdirs() }
             try {
@@ -155,20 +155,20 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
                 val out = tmp.listFiles()
                     ?.filter { it.isFile && !it.name.endsWith(".part") && !it.name.endsWith(".ytdl") }
                     ?.maxByOrNull { it.length() }
-                    ?: throw IllegalStateException("ডাউনলোড শেষ, কিন্তু ফাইল পাওয়া যায়নি")
+                    ?: throw IllegalStateException("Download finished, but no file was found")
 
-                _state.update { it.copy(statusLine = "গ্যালারিতে সেভ হচ্ছে…", progress = 1f) }
+                _state.update { it.copy(statusLine = "Saving to gallery…", progress = 1f) }
                 val uri = MediaSaver.save(app, out, isAudio)
                 val title = out.nameWithoutExtension
                 _state.update {
                     it.copy(
                         saved = listOf(SavedItem(title, uri, isAudio)) + it.saved,
-                        message = if (isAudio) "✅ Music/SaveKoro তে সেভ হয়েছে" else "✅ Movies/SaveKoro তে সেভ হয়েছে",
+                        message = if (isAudio) "✅ Saved to Music/SaveKoro" else "✅ Saved to Movies/SaveKoro",
                     )
                 }
             } catch (e: Exception) {
                 if (cancelled) {
-                    _state.update { it.copy(message = "ডাউনলোড বাতিল করা হয়েছে") }
+                    _state.update { it.copy(message = "Download cancelled") }
                 } else {
                     _state.update { it.copy(error = friendlyError(e)) }
                 }
@@ -189,9 +189,9 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         _state.update { it.copy(updating = true) }
         viewModelScope.launch {
             val msg = try {
-                if (Engine.update(app)) "yt-dlp আপডেট হয়েছে ✅" else "yt-dlp আগে থেকেই সর্বশেষ ভার্সনে আছে"
+                if (Engine.update(app)) "yt-dlp updated ✅" else "yt-dlp is already up to date"
             } catch (e: Exception) {
-                "আপডেট হয়নি: ${e.message?.take(120)}"
+                "Update failed: ${e.message?.take(120)}"
             }
             _state.update { it.copy(updating = false, message = msg, engineVersion = Engine.version(app)) }
         }
@@ -206,17 +206,17 @@ class MainViewModel(private val app: Application) : AndroidViewModel(app) {
         val raw = e.message.orEmpty()
         val m = raw.lowercase()
         return when {
-            "unsupported url" in m -> "এই লিংকটা সাপোর্টেড নয়। ঠিক ভিডিওর লিংক দিন।"
+            "unsupported url" in m -> "This link is not supported. Please paste a valid video link."
             "sign in to confirm" in m || "not a bot" in m ->
-                "YouTube বট-চেক চাইছে। একটু পরে চেষ্টা করুন বা নিচে থেকে yt-dlp আপডেট করুন।"
+                "YouTube is asking for a bot check. Try again later or update the engine below."
             "private" in m || "login" in m || "log in" in m || "cookies" in m ->
-                "এই ভিডিও প্রাইভেট অথবা দেখতে লগইন লাগে।"
+                "This video is private or requires login."
             "unable to download webpage" in m || "timed out" in m || "network" in m || "resolve host" in m ->
-                "ইন্টারনেট সংযোগ চেক করুন।"
+                "Please check your internet connection."
             "requested format is not available" in m ->
-                "এই কোয়ালিটি পাওয়া যায়নি। 'সেরা' দিয়ে চেষ্টা করুন।"
-            raw.isBlank() -> "কিছু একটা সমস্যা হয়েছে।"
-            else -> "সমস্যা: " + (raw.lines().lastOrNull { it.contains("ERROR") } ?: raw.lines().first()).take(250)
+                "This quality is not available. Try 'Best'."
+            raw.isBlank() -> "Something went wrong."
+            else -> "Error: " + (raw.lines().lastOrNull { it.contains("ERROR") } ?: raw.lines().first()).take(250)
         }
     }
 

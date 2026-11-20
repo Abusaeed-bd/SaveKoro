@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
         handleShare(intent)
     }
 
-    /** অন্য অ্যাপ থেকে Share → SaveKoro করলে লিংক নিজে বসে যায় */
+    /** Share → SaveKoro from another app fills in the link automatically */
     private fun handleShare(intent: Intent?) {
         if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
             intent.getStringExtra(Intent.EXTRA_TEXT)?.let(vm::onSharedText)

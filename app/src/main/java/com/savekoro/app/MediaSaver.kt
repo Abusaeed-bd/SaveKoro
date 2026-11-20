@@ -16,8 +16,8 @@ import java.io.IOException
 import kotlin.coroutines.resume
 
 /**
- * ডাউনলোড হওয়া ফাইলকে ফোনের গ্যালারিতে সেভ করে:
- * ভিডিও → Movies/SaveKoro, অডিও → Music/SaveKoro
+ * Saves the downloaded file to the phone gallery:
+ * video → Movies/SaveKoro, audio → Music/SaveKoro
  */
 object MediaSaver {
     private const val FOLDER = "SaveKoro"
@@ -47,11 +47,11 @@ object MediaSaver {
             put(MediaStore.MediaColumns.IS_PENDING, 1)
         }
         val uri = resolver.insert(collection, values)
-            ?: throw IOException("গ্যালারিতে ফাইল বানানো যায়নি")
+            ?: throw IOException("Could not create file in gallery")
         try {
             resolver.openOutputStream(uri)?.use { out ->
                 file.inputStream().use { it.copyTo(out) }
-            } ?: throw IOException("গ্যালারিতে লেখা যায়নি")
+            } ?: throw IOException("Could not write to gallery")
             values.clear()
             values.put(MediaStore.MediaColumns.IS_PENDING, 0)
             resolver.update(uri, values, null, null)
