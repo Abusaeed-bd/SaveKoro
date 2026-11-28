@@ -76,7 +76,7 @@ android {
 }
 
 dependencies {
-    val ytdl = "0.17.4"
+    val ytdl = "0.18.1"
     implementation("io.github.junkfood02.youtubedl-android:library:$ytdl")
     implementation("io.github.junkfood02.youtubedl-android:ffmpeg:$ytdl")
 

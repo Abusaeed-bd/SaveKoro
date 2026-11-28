@@ -7,9 +7,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.io.IOException
 
 /**
- * yt-dlp + ffmpeg engine. First start takes a few seconds (Python gets extracted).
+ * yt-dlp + ffmpeg (+ QuickJS, bundled by youtubedl-android 0.18.1+) engine.
+ * First start takes a few seconds (Python gets extracted).
  */
 object Engine {
     private val mutex = Mutex()
@@ -30,26 +32,55 @@ object Engine {
         }
     }
 
-    fun version(context: Context): String =
-        runCatching { YoutubeDL.getInstance().version(context.applicationContext) }.getOrNull() ?: "?"
+    /** null = still running the yt-dlp that shipped inside the app (never updated) */
+    fun version(context: Context): String? =
+        runCatching { YoutubeDL.getInstance().version(context.applicationContext) }.getOrNull()
 
-    /** Updates yt-dlp to the latest stable release from GitHub. true = a new version was installed */
+    fun versionLabel(context: Context): String = version(context) ?: "built-in (not updated yet)"
+
+    /**
+     * Updates yt-dlp. Tries the stable channel first, then nightly.
+     * true = a new version was installed, false = already up to date.
+     * Throws IOException with the real reason(s) if every channel fails.
+     */
     suspend fun update(context: Context): Boolean = withContext(Dispatchers.IO) {
         ensureReady(context)
-        val status = YoutubeDL.getInstance().updateYoutubeDL(context.applicationContext)
-        prefs(context).edit().putLong(KEY_LAST_UPDATE, System.currentTimeMillis()).apply()
-        status == YoutubeDL.UpdateStatus.DONE
+        val app = context.applicationContext
+        val channels = listOf(
+            "stable" to YoutubeDL.UpdateChannel.STABLE,
+            "nightly" to YoutubeDL.UpdateChannel.NIGHTLY,
+        )
+        val errors = mutableListOf<String>()
+        for ((name, channel) in channels) {
+            try {
+                val status = YoutubeDL.getInstance().updateYoutubeDL(app, channel)
+                prefs(app).edit().putLong(KEY_LAST_UPDATE, System.currentTimeMillis()).apply()
+                return@withContext status == YoutubeDL.UpdateStatus.DONE
+            } catch (e: Exception) {
+                errors += "$name: ${describe(e)}"
+            }
+        }
+        throw IOException(errors.joinToString("\n"))
     }
 
     /**
-     * Sites change often, so yt-dlp auto-updates once a day.
-     * Silently skipped when offline.
+     * Runs on every app start. If the engine has never been updated (or the last
+     * update failed) it tries again right away; otherwise once a day.
      */
     suspend fun autoUpdateIfDue(context: Context) {
+        val neverUpdated = version(context) == null
         val last = prefs(context).getLong(KEY_LAST_UPDATE, 0)
-        if (System.currentTimeMillis() - last < DAY_MS) return
+        if (!neverUpdated && System.currentTimeMillis() - last < DAY_MS) return
         runCatching { update(context) }
     }
+
+    /** Full error chain, e.g. "failed to update youtube-dl → HTTP 403 rate limit exceeded" */
+    fun describe(e: Throwable): String =
+        generateSequence(e) { it.cause }
+            .map { it.message?.takeIf(String::isNotBlank) ?: it.javaClass.simpleName }
+            .distinct()
+            .joinToString(" → ")
+            .take(400)
 
     private fun prefs(c: Context) =
         c.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
